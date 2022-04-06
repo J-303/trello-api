@@ -5,6 +5,7 @@ export class UserDTO {
     @ApiProperty()
     @IsNotEmpty()
     username?: string;
+    //TODO: отделяй смысловые блоки пустой строкой.
     @ApiProperty()
     @IsEmail()
     email: string;

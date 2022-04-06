@@ -13,6 +13,7 @@ export class UserController {
 
     @ApiAcceptedResponse({description: 'User logged in successfully'})
     @ApiBadRequestResponse({description: 'Cannot log in'})
+     //TODO: лучше так и назвать endpoint /login
     @Get('auth')
     @UsePipes(new ValidationPipe())
     login(@Body() data: UserDTO) {
@@ -21,6 +22,7 @@ export class UserController {
 
     @ApiCreatedResponse({description: 'User created'})
     @ApiBadRequestResponse({description: 'Cannot create user'})
+    //TODO: лучше так и назвать endpoint /register
     @Post('auth')
     @UsePipes(new ValidationPipe())
     register(@Body() data: UserDTO) {
@@ -28,6 +30,7 @@ export class UserController {
     }
 
     @ApiAcceptedResponse({description: 'Request accepted'})
+    //TODO: Нет, так не делается пагинация. Давай пока её лучше уберем
     @Get('users/:page')
     getAllUsers(@Param('page') page: number) {
         return this.userServise.getAll(page);
@@ -41,6 +44,7 @@ export class UserController {
 
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiNotFoundResponse({description: 'User not found'})
+    //TODO: должно быть users/:id
     @Get('user/:id')
     getOneUser(@Param('id') id: number) {
         return this.userServise.getOne(id);

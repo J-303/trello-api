@@ -15,17 +15,20 @@ export class UserService {
     async login(data: UserDTO) {
         const {email, password} = data;
         let userCheck = await this.userRepository.findOne({where: {email}});
+   // TODO: аутентификацию и авторизацию нужно сделать через passport (https://docs.nestjs.com/security/authentication)
         if (!userCheck || !(await userCheck.checkPass(password))) {
             throw new HttpException(
                 'Invalid email or password.',
                 HttpStatus.BAD_REQUEST
             );
         }
+        //TODO: нет, entity не должно формировать response. Для этого нужно создать отдельный DTOResponse class с нужными полями, и в сервисе создавать экземпляр этого класса. 
         return userCheck.response(true);
     }
 
     async register(data: UserDTO) {
         const {email} = data;
+        // TODO: плохое название переменной. Лучше просто назвать user
         let userCheck = await this.userRepository.findOne({where: {email}})
         if (userCheck) {
             throw new HttpException(
@@ -40,6 +43,7 @@ export class UserService {
 
     async getOne(id: number) {
         const user = await this.userRepository.findOne({where: {id}});
+        // Вместо HttpException можно выкидывать NotFoundException
         if (!user) throw new HttpException('User not found.', HttpStatus.NOT_FOUND);
         return user.response();
     }

@@ -2,6 +2,7 @@ import { Injectable, ArgumentMetadata, PipeTransform, HttpException, HttpStatus 
 import { validate } from "class-validator";
 import { plainToClass } from "class-transformer";
 
+//TODO: вместо этого лучше объявить глобальный ValidationPipe (он есть в "@nestjs/common") в main.ts файле
 @Injectable()
 export class ValidationPipe implements PipeTransform {
     async transform(value: any, metadata: ArgumentMetadata) {

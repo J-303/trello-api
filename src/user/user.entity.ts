@@ -30,6 +30,7 @@ export class UserEntity {
         return await bcrypt.compare(password, this.password);
     }
 
+    //TODO: файл entity должен содержать только структуру таблицы. И может содержать базовую логику. Токен точно не должен здесь генерироваться. 
     private get token() {
         const {id, username} = this;
         return jwt.sign(

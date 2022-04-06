@@ -1,6 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus } from "@nestjs/common"
 import * as jwt from "jsonwebtoken";
 
+//TODO: сделай авторизацию по документации nestjs
 @Injectable()
 export class AuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean>

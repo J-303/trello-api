@@ -14,6 +14,7 @@ export class ColumnController {
     
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiNotFoundResponse({description: 'User not found'})
+    //TODO: Должно быть users/:userid/columns
     @Get('user/:userid/columns')
     getUserColumns(@Param('userid') id: number) {
         return this.columnServise.getAll(id);
@@ -21,6 +22,7 @@ export class ColumnController {
 
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiNotFoundResponse({description: 'Column not found'})
+    //TODO: Должно быть columns/...
     @Get('column/:columnid')
     getOneColumn(@Param('columnid') id: number) {
         return this.columnServise.getOne(id);
@@ -47,6 +49,7 @@ export class ColumnController {
     @ApiForbiddenResponse({description: 'Cannot edit column'})
     @ApiNotFoundResponse({description: 'Column not found'})
     @Put('column/:columnid')
+    //TODO: Должна быть валидация на то, что текущий пользователь имеет право на редактирование этой колонки
     @UseGuards(new AuthGuard())
     @UsePipes(new ValidationPipe())
     editColumn(@User('id') userId: number, @Param('columnid') id: number, @Body() data: ColumnDTO) {

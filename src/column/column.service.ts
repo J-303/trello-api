@@ -25,6 +25,7 @@ export class ColumnService {
     async getOne(id: number) {
         const column = await this.columnRepository.findOne({
             where:{id},
+            //TODO: зачем здесь owner?
             relations: ['owner']
         });
         if (!column)
@@ -70,6 +71,8 @@ export class ColumnService {
                 'Column not found.',
                 HttpStatus.NOT_FOUND
             );
+
+    //TODO: Проверка должна осуществляться на уровне контроллера с помощью @UseGuards
         this.checkOwner(column, ownerId);
         await this.columnRepository.update({id}, data);
         column = await this.columnRepository.findOne({
