@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-import { AuthGuard } from 'src/share/auth.guard';
+import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { User } from './user.decorator';
 import { UserDTO } from './user.dto';
 import { UserService } from './user.service';
 import { ApiAcceptedResponse, ApiBadRequestResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller()
 export class UserController {
@@ -13,47 +13,36 @@ export class UserController {
 
     @ApiAcceptedResponse({description: 'User logged in successfully'})
     @ApiBadRequestResponse({description: 'Cannot log in'})
-     //TODO: лучше так и назвать endpoint /login
-    @Get('auth')
-    @UsePipes(new ValidationPipe())
+    @UseGuards(AuthGuard('local'))
+    @Post('login')
     login(@Body() data: UserDTO) {
         return this.userServise.login(data);
     }
 
     @ApiCreatedResponse({description: 'User created'})
     @ApiBadRequestResponse({description: 'Cannot create user'})
-    //TODO: лучше так и назвать endpoint /register
-    @Post('auth')
-    @UsePipes(new ValidationPipe())
+    @Post('register')
     register(@Body() data: UserDTO) {
         return this.userServise.register(data);
     }
 
     @ApiAcceptedResponse({description: 'Request accepted'})
-    //TODO: Нет, так не делается пагинация. Давай пока её лучше уберем
-    @Get('users/:page')
-    getAllUsers(@Param('page') page: number) {
-        return this.userServise.getAll(page);
-    }
-
-    @ApiAcceptedResponse({description: 'Request accepted'})
     @Get('users')
-    getAllUsersPage1() {
-        return this.userServise.getAll(1);
+    getAllUsers() {
+        return this.userServise.getAll();
     }
 
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiNotFoundResponse({description: 'User not found'})
-    //TODO: должно быть users/:id
-    @Get('user/:id')
+    @Get('users/:id')
     getOneUser(@Param('id') id: number) {
         return this.userServise.getOne(id);
     }
 
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiForbiddenResponse({description: 'Cannot get user info'})
-    @Get('user')
-    @UseGuards(new AuthGuard())
+    @Get('profile')
+    @UseGuards(AuthGuard('jwt'))
     getMe(@User('id') userId: number) {
         return this.userServise.getOne(userId);
     }
@@ -61,9 +50,8 @@ export class UserController {
     @ApiAcceptedResponse({description: 'User info changed'})
     @ApiForbiddenResponse({description: 'Cannot change user info'})
     @ApiNotFoundResponse({description: 'User not found'})
-    @Put('user')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
+    @Put('users')
+    @UseGuards(AuthGuard('jwt'))
     editUser(@User('id') id: number, @Body() data: UserDTO) {
         return this.userServise.edit(id, data);
     }
@@ -72,8 +60,7 @@ export class UserController {
     @ApiForbiddenResponse({description: 'Cannot change password'})
     @ApiNotFoundResponse({description: 'User not found'})
     @Put('changepassword')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
+    @UseGuards(AuthGuard('jwt'))
     changePassword(@User('id') userId: number, @Body() data: UserDTO) {
         return this.userServise.changePass(userId, data);
     }

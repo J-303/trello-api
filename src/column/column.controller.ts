@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiAcceptedResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { AuthGuard } from 'src/share/auth.guard';
-import { ValidationPipe } from 'src/share/validation.pipe';
 import { User } from 'src/user/user.decorator';
 import { ColumnDTO } from './column.dto';
 import { ColumnService } from './column.service';
@@ -14,7 +13,6 @@ export class ColumnController {
     
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiNotFoundResponse({description: 'User not found'})
-    //TODO: Должно быть users/:userid/columns
     @Get('user/:userid/columns')
     getUserColumns(@Param('userid') id: number) {
         return this.columnServise.getAll(id);
@@ -22,7 +20,6 @@ export class ColumnController {
 
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiNotFoundResponse({description: 'Column not found'})
-    //TODO: Должно быть columns/...
     @Get('column/:columnid')
     getOneColumn(@Param('columnid') id: number) {
         return this.columnServise.getOne(id);
@@ -31,7 +28,7 @@ export class ColumnController {
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiNotFoundResponse({description: 'User not found'})
     @Get('columns')
-    @UseGuards(new AuthGuard())
+    @UseGuards(AuthGuard('jwt'))
     getMyColumns(@User('id') id: number) {
         return this.columnServise.getAll(id);
     }
@@ -39,8 +36,7 @@ export class ColumnController {
     @ApiCreatedResponse({description: 'Column created'})
     @ApiForbiddenResponse({description: 'Cannot create column'})
     @Post('columns')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
+    @UseGuards(AuthGuard('jwt'))
     addColumn(@User('id') id: number, @Body() data: ColumnDTO) {
         return this.columnServise.create(id, data);
     }
@@ -49,9 +45,7 @@ export class ColumnController {
     @ApiForbiddenResponse({description: 'Cannot edit column'})
     @ApiNotFoundResponse({description: 'Column not found'})
     @Put('column/:columnid')
-    //TODO: Должна быть валидация на то, что текущий пользователь имеет право на редактирование этой колонки
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
+    @UseGuards(AuthGuard('jwt'))
     editColumn(@User('id') userId: number, @Param('columnid') id: number, @Body() data: ColumnDTO) {
         return this.columnServise.update(id, userId, data);
     }
@@ -60,7 +54,7 @@ export class ColumnController {
     @ApiNotFoundResponse({description: 'Column not found'})
     @ApiForbiddenResponse({description: 'Cannot delete column'})
     @Delete('column/:columnid') 
-    @UseGuards(new AuthGuard())
+    @UseGuards(AuthGuard('jwt'))
     removeColumn(@User('id') userId: number, @Param('columnid') id: number) {
         return this.columnServise.detele(id, userId);
     }

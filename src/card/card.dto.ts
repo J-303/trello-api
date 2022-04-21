@@ -6,3 +6,8 @@ export class CardDTO {
     @IsNotEmpty()
     name: string;
 }
+
+export class CardDTOResponse {
+    @ApiProperty()
+    name: string;
+}

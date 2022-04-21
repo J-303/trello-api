@@ -26,17 +26,6 @@ export class CardEntity {
     @OneToMany(type => CommentEntity, comment => comment.card, {cascade: true})
     comments?: CommentEntity[];
 
-    response() {
-        const {id,name,content} = this;
-        return {
-            id,
-            name,
-            content,
-            owner: {id: this.owner.id, username: this.owner.username},
-            column: {id: this.column.id, name: this.column.name}
-        }
-    }
-
     checkOwner(userId: number) {
         if(this.owner.id != userId)
             throw new HttpException('Incorrect user.', HttpStatus.UNAUTHORIZED);

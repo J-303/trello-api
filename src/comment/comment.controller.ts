@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiAcceptedResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { AuthGuard } from 'src/share/auth.guard';
 import { User } from 'src/user/user.decorator';
 import { CommentDTO } from './comment.dto';
 import { CommentService } from './comment.service';
@@ -13,16 +13,15 @@ export class CommentController {
     
     @ApiAcceptedResponse({description: 'Request accepted'})
     @ApiNotFoundResponse({description: 'Comment not found'})
-    @Get('comment/:id')
+    @Get('comments/:id')
     getOneComment(@Param('id') id: number) {
         return this.commentServise.getOne(id);
     }
     
     @ApiCreatedResponse({description: 'Comment created'})
     @ApiForbiddenResponse({description: 'Cannot create comment'})
-    @Post('card/:cardid')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
+    @Post('cards/:cardid')
+    @UseGuards(AuthGuard('jwt'))
     createComment(@Param('cardid') cardId: number, @User('id') userId: number, @Body() data: CommentDTO) {
         return this.commentServise.create(cardId, userId, data);
     }
@@ -30,9 +29,8 @@ export class CommentController {
     @ApiAcceptedResponse({description: 'Comment edited'})
     @ApiForbiddenResponse({description: 'Cannot edit comment'})
     @ApiNotFoundResponse({description: 'Comment not found'})
-    @Put('comment/:id')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
+    @Put('comments/:id')
+    @UseGuards(AuthGuard('jwt'))
     editComment(@Param('id') id: number, @User('id') ownerId: number, @Body() data: CommentDTO) {
         return this.commentServise.update(id, ownerId, data);
     }
@@ -40,8 +38,8 @@ export class CommentController {
     @ApiAcceptedResponse({description: 'Comment deleted'})
     @ApiForbiddenResponse({description: 'Cannot delete comment'})
     @ApiNotFoundResponse({description: 'Comment not found'})
-    @Delete('comment/:id') 
-    @UseGuards(new AuthGuard())
+    @Delete('comments/:id') 
+    @UseGuards(AuthGuard('jwt'))
     removeComment(@Param('id') id: number, @User('id') ownerId: number) {
         return this.commentServise.delete(id, ownerId);
     }

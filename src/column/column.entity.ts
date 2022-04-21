@@ -16,21 +16,4 @@ export class ColumnEntity {
 
     @OneToMany(type => CardEntity, card => card.column, {cascade: true})
     cards?: CardEntity[];
-
-    response() {
-        const {id, name} = this;
-        const respongeObj = {
-            id,
-            name, 
-            owner: {
-                id: this.owner.id, 
-                username: this.owner.username
-            }, 
-            cards: this.cards?.map(card => {return {
-                id: card.id, 
-                name: card.name
-            }})
-        }
-        return respongeObj;
-    }
 }

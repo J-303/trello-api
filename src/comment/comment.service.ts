@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CardEntity } from 'src/card/card.entity';
 import { UserEntity } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
-import { CommentDTO } from './comment.dto';
+import { CommentDTO, CommentDTOResponse } from './comment.dto';
 import { CommentEntity } from './comment.entity';
 
 @Injectable()
@@ -23,7 +23,8 @@ export class CommentService {
             relations:['owner','card']
         });
         if (!comment) throw new HttpException('Comment not found.', HttpStatus.NOT_FOUND);
-        return comment.response();
+        const commentResponse: CommentDTOResponse = comment;
+        return commentResponse;
     }
 
     async create(cardId: number, userId: number, data: CommentDTO) {
@@ -40,7 +41,8 @@ export class CommentService {
             card: card
         });
         this.commentRepository.save(comment);
-        return comment.response();
+        const commentResponse: CommentDTOResponse = comment;
+        return commentResponse;
     }
 
     async update(id: number, ownerId: number, data: CommentDTO) {
@@ -57,7 +59,8 @@ export class CommentService {
             where:{id},
             relations:['owner','card']
         });
-        return comment.response();
+        const commentResponse: CommentDTOResponse = comment;
+        return commentResponse;
     }
 
     async delete(id: number, ownerId: number) {
@@ -70,6 +73,7 @@ export class CommentService {
         if (!comment) throw new HttpException('Comment not found.', HttpStatus.NOT_FOUND);
         if (comment.owner.id != ownerId) throw new HttpException('Incorrect user.', HttpStatus.UNAUTHORIZED);
         this.commentRepository.remove(comment);
-        return comment.response();
+        const commentResponse: CommentDTOResponse = comment;
+        return commentResponse;
     }
 }

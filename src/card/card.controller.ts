@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiAcceptedResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { AuthGuard } from 'src/share/auth.guard';
 import { User } from 'src/user/user.decorator';
 import { CardDTO } from './card.dto';
 import { CardService } from './card.service';
@@ -27,8 +27,7 @@ export class CardController {
     @ApiCreatedResponse({description: 'Card created'})
     @ApiForbiddenResponse({description: 'Cannot create card'})
     @Post('column/:columnid')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
+    @UseGuards(AuthGuard('jwt'))
     addCard(@Param('columnid') columnId: number, @User('id') userId: number, @Body() data: CardDTO) {
         return this.cardServise.create(userId, columnId, data);
     }
@@ -37,8 +36,7 @@ export class CardController {
     @ApiNotFoundResponse({description: 'Card not found'})
     @ApiForbiddenResponse({description: 'Cannot create card'})
     @Put('card/:cardid')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
+    @UseGuards(AuthGuard('jwt'))
     editCard(@Param('cardid') cardId: number, @User('id') userId: number, @Body() data: CardDTO) {
         return this.cardServise.update(cardId, userId, data);
     }
@@ -47,7 +45,7 @@ export class CardController {
     @ApiNotFoundResponse({description: 'Card not found'})
     @ApiForbiddenResponse({description: 'Cannot delete card'})
     @Delete('card/:cardid')
-    @UseGuards(new AuthGuard())
+    @UseGuards(AuthGuard('jwt'))
     removeCard(@Param('cardid') cardId: number, @User('id') userId: number) {
         return this.cardServise.delete(cardId, userId);
     }

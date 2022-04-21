@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
-import { ColumnDTO } from './column.dto';
+import { ColumnDTO, ColumnDTOResponse } from './column.dto';
 import { ColumnEntity } from './column.entity';
 
 @Injectable()
@@ -25,7 +25,6 @@ export class ColumnService {
     async getOne(id: number) {
         const column = await this.columnRepository.findOne({
             where:{id},
-            //TODO: зачем здесь owner?
             relations: ['owner']
         });
         if (!column)
@@ -33,7 +32,8 @@ export class ColumnService {
                 'Column not found.',
                 HttpStatus.NOT_FOUND
             );
-        return column.response();
+        const columnResponse: ColumnDTOResponse = column;
+        return columnResponse;
     }
 
     async getAll(userId: number) {
@@ -43,7 +43,10 @@ export class ColumnService {
             where:{owner: userId},
             relations: ['owner']
         });
-        return columns.map(column => column.response());
+        return columns.map(column => {
+            const columnResponse: ColumnDTOResponse = column;
+            return columnResponse;
+        });
     }
 
     async create(ownerId: number, data: ColumnDTO) {
@@ -58,7 +61,8 @@ export class ColumnService {
             owner: user
         });
         this.columnRepository.save(column);
-        return column.response();
+        const columnResponse: ColumnDTOResponse = column;
+        return columnResponse;
     }
 
     async update(id: number, ownerId: number, data: ColumnDTO) {
@@ -71,15 +75,14 @@ export class ColumnService {
                 'Column not found.',
                 HttpStatus.NOT_FOUND
             );
-
-    //TODO: Проверка должна осуществляться на уровне контроллера с помощью @UseGuards
         this.checkOwner(column, ownerId);
         await this.columnRepository.update({id}, data);
         column = await this.columnRepository.findOne({
             where: {id},
             relations: ['owner']
         });
-        return column.response();
+        const columnResponse: ColumnDTOResponse = column;
+        return columnResponse;
     }
 
     async detele(id: number, ownerId: number) {
@@ -94,6 +97,7 @@ export class ColumnService {
             );
         this.checkOwner(column, ownerId);
         await this.columnRepository.remove(column);
-        return column.response();
+        const columnResponse: ColumnDTOResponse = column;
+        return columnResponse;
     }
 }

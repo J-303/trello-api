@@ -8,7 +8,9 @@ import { CardEntity } from './card.entity';
 import { CardService } from './card.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CardEntity, UserEntity, ColumnEntity, CommentEntity])],
+  imports: [
+    TypeOrmModule.forFeature([CardEntity, UserEntity, ColumnEntity, CommentEntity])
+  ],
   controllers: [CardController],
   providers: [CardService]
 })

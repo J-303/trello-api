@@ -4,7 +4,7 @@ import { ColumnEntity } from 'src/column/column.entity';
 import { CommentEntity } from 'src/comment/comment.entity';
 import { UserEntity } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
-import { CardDTO } from './card.dto';
+import { CardDTO, CardDTOResponse } from './card.dto';
 import { CardEntity } from './card.entity';
 
 @Injectable()
@@ -26,7 +26,10 @@ export class CardService {
             relations: ['owner', 'column']
         });
         if (!cards) throw new HttpException('Column not found', HttpStatus.NOT_FOUND);
-        return cards.map(card => card.response());
+        return cards.map(card => {
+            const cardResponse: CardDTOResponse = card;
+            return cardResponse;
+        });
     }
 
     async getOne(cardId: number) {
@@ -39,8 +42,9 @@ export class CardService {
             where:{card:cardId},
             relations:['owner']
         }))
+        const cardResponse: CardDTOResponse = card;
         return {
-            ...card.response(),
+            card: cardResponse,
             comments: comments.map(comm => {
                 return {
                     id: comm.id,
@@ -66,7 +70,8 @@ export class CardService {
             column: column
         })
         await this.cardRepository.save(card);
-        return card.response();
+        const cardResponse: CardDTOResponse = card;
+        return cardResponse;
     }
 
     async update(id: number, ownerId: number, data: CardDTO) {
@@ -87,7 +92,8 @@ export class CardService {
             where:{card},
             relations: ['owner']
         });
-        return card.response();
+        const cardResponse: CardDTOResponse = card;
+        return cardResponse;
     }
 
     async delete(id: number, ownerId: number) {
@@ -99,11 +105,9 @@ export class CardService {
         });
         if (!card) throw new HttpException('Card not found.', HttpStatus.NOT_FOUND);
         card.checkOwner(ownerId);
-        card.comments = await this.commentRepository.find({
-            where:{card},
-            relations: ['owner']
-        });
+        await this.commentRepository.delete({card});
         this.cardRepository.delete({id});
-        return card.response();
+        const cardResponse: CardDTOResponse = card;
+        return cardResponse;
     }
 }

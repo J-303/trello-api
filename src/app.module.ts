@@ -6,11 +6,12 @@ import { UserModule } from './user/user.module';
 import { ColumnModule } from './column/column.module';
 import { CardModule } from './card/card.module';
 import { CommentModule } from './comment/comment.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(), 
-    UserModule, ColumnModule, CardModule, CommentModule,
+    TypeOrmModule.forRoot(),
+    UserModule, ColumnModule, CardModule, CommentModule, AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

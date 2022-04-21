@@ -17,12 +17,4 @@ export class CommentEntity {
     @ManyToOne(type => CardEntity)
     @JoinColumn({name:'card'})
     card: CardEntity;
-
-    response() {
-        return {
-            ...this,
-            owner: {id: this.owner.id, username: this.owner.username},
-            card: {id: this.card.id, name: this.card.name}
-        }
-    }
 }

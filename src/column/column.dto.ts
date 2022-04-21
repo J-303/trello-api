@@ -6,3 +6,9 @@ export class ColumnDTO {
     @IsNotEmpty()
     name: string;
 }
+
+export class ColumnDTOResponse {
+    @ApiProperty()
+    @IsNotEmpty()
+    name: string;
+}

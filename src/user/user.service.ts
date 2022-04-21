@@ -1,60 +1,53 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserDTO } from './user.dto';
+import { UserDTO, UserDTOResponse } from './user.dto';
 import { UserEntity } from './user.entity';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(UserEntity)
-        private userRepository: Repository<UserEntity>
+        private userRepository: Repository<UserEntity>,
+        private jwtService: JwtService
     ) {}
 
     async login(data: UserDTO) {
-        const {email, password} = data;
-        let userCheck = await this.userRepository.findOne({where: {email}});
-   // TODO: аутентификацию и авторизацию нужно сделать через passport (https://docs.nestjs.com/security/authentication)
-        if (!userCheck || !(await userCheck.checkPass(password))) {
-            throw new HttpException(
-                'Invalid email or password.',
-                HttpStatus.BAD_REQUEST
-            );
-        }
-        //TODO: нет, entity не должно формировать response. Для этого нужно создать отдельный DTOResponse class с нужными полями, и в сервисе создавать экземпляр этого класса. 
-        return userCheck.response(true);
+        const user: UserDTOResponse = data;
+        const payload = { username: data.email, password: data.password};
+        return { access_token: this.jwtService.sign(payload), user };
     }
 
     async register(data: UserDTO) {
         const {email} = data;
-        // TODO: плохое название переменной. Лучше просто назвать user
-        let userCheck = await this.userRepository.findOne({where: {email}})
+        const userCheck = await this.userRepository.findOne({where: {email}})
         if (userCheck) {
             throw new HttpException(
                 'Email is already in use.',
                 HttpStatus.BAD_REQUEST
             );
         }
-        let user = this.userRepository.create(data);
+        const user = this.userRepository.create(data);
         this.userRepository.save(user);
-        return user.response(true);
+        return this.login(user);
     }
 
     async getOne(id: number) {
         const user = await this.userRepository.findOne({where: {id}});
-        // Вместо HttpException можно выкидывать NotFoundException
         if (!user) throw new HttpException('User not found.', HttpStatus.NOT_FOUND);
-        return user.response();
+        const userResponse: UserDTOResponse = user;
+        return userResponse;
     }
 
-    async getAll(page: number = 1) {
-        const users = await this.userRepository.find({
-            take: 30,
-            skip: (page-1)*30
-        });
+    async getAll() {
+        const users = await this.userRepository.find();
         if (!users) throw new HttpException('Users not found.', HttpStatus.NOT_FOUND);
-        return users.map(user => user.response());
+        return users.map(user => {
+            const userResponse: UserDTOResponse = user;
+            return userResponse;
+        });
     }
 
     async edit(id: number, data: Partial<UserDTO>) {
