@@ -1,46 +1,72 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    Request,
+    UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiAcceptedResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { User } from 'src/user/user.decorator';
-import { CommentDTO } from './comment.dto';
+import { ApiBearerAuth, ApiNotFoundResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { CommentOwnerGuard } from './comment-owner.guard';
+import {
+    CreateCommentDTO,
+    ResponseCommentDTO,
+    UpdateCommentDTO,
+} from './comment.dto';
 import { CommentService } from './comment.service';
 
+@ApiTags('Comments')
+@ApiBearerAuth()
 @Controller()
 export class CommentController {
-    constructor (
-        private commentServise: CommentService
-    ) {}
-    
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    @ApiNotFoundResponse({description: 'Comment not found'})
-    @Get('comments/:id')
+    constructor(private commentService: CommentService) {}
+
+    @ApiOkResponse({ type: ResponseCommentDTO })
+    @ApiNotFoundResponse()
+    @Get('cards/:cardId/comments')
+    getManyComments(@Param('cardId') cardId: number) {
+        return this.commentService.getMany(cardId);
+    }
+
+    @ApiOkResponse({ type: ResponseCommentDTO })
+    @ApiNotFoundResponse()
+    @Get('comments/:td')
     getOneComment(@Param('id') id: number) {
-        return this.commentServise.getOne(id);
-    }
-    
-    @ApiCreatedResponse({description: 'Comment created'})
-    @ApiForbiddenResponse({description: 'Cannot create comment'})
-    @Post('cards/:cardid')
-    @UseGuards(AuthGuard('jwt'))
-    createComment(@Param('cardid') cardId: number, @User('id') userId: number, @Body() data: CommentDTO) {
-        return this.commentServise.create(cardId, userId, data);
+        return this.commentService.getOne(id);
     }
 
-    @ApiAcceptedResponse({description: 'Comment edited'})
-    @ApiForbiddenResponse({description: 'Cannot edit comment'})
-    @ApiNotFoundResponse({description: 'Comment not found'})
+    @ApiOkResponse({ type: ResponseCommentDTO })
+    @ApiNotFoundResponse()
+    @ApiUnauthorizedResponse()
+    @UseGuards(AuthGuard())
+    @Post('cards/:cardId/comments')
+    createOneComment(
+        @Request() req,
+        @Body() dto: CreateCommentDTO,
+        @Param('cardId') cardId: number,
+    ) {
+        return this.commentService.createOne(req, dto, cardId);
+    }
+
+    @ApiOkResponse({ type: ResponseCommentDTO })
+    @ApiUnauthorizedResponse()
+    @ApiNotFoundResponse()
+    @UseGuards(AuthGuard(), CommentOwnerGuard)
     @Put('comments/:id')
-    @UseGuards(AuthGuard('jwt'))
-    editComment(@Param('id') id: number, @User('id') ownerId: number, @Body() data: CommentDTO) {
-        return this.commentServise.update(id, ownerId, data);
+    updateOneComment(@Param('id') id: number, @Body() dto: UpdateCommentDTO) {
+        return this.commentService.updateOne(dto, id);
     }
 
-    @ApiAcceptedResponse({description: 'Comment deleted'})
-    @ApiForbiddenResponse({description: 'Cannot delete comment'})
-    @ApiNotFoundResponse({description: 'Comment not found'})
-    @Delete('comments/:id') 
-    @UseGuards(AuthGuard('jwt'))
-    removeComment(@Param('id') id: number, @User('id') ownerId: number) {
-        return this.commentServise.delete(id, ownerId);
+    @ApiOkResponse({ type: ResponseCommentDTO })
+    @ApiUnauthorizedResponse()
+    @ApiNotFoundResponse()
+    @UseGuards(AuthGuard(), CommentOwnerGuard)
+    @Delete('comments/:id')
+    deleteOneComment(@Param('id') id: number) {
+        return this.commentService.deleteOne(id);
     }
 }

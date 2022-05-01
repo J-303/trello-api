@@ -1,8 +1,14 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { UserEntity } from "src/user/user.entity";
-import { CardEntity } from "src/card/card.entity";
+import { CardEntity } from 'src/card/card.entity';
+import { UserEntity } from 'src/user/user.entity';
+import {
+    Column,
+    Entity,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 
-@Entity('column')
+@Entity('columns')
 export class ColumnEntity {
     @PrimaryGeneratedColumn()
     id: number;
@@ -10,10 +16,12 @@ export class ColumnEntity {
     @Column()
     name: string;
 
-    @ManyToOne(type => UserEntity)
-    @JoinColumn({name:'user'})
+    @ManyToOne((type) => UserEntity)
     owner: UserEntity;
 
-    @OneToMany(type => CardEntity, card => card.column, {cascade: true})
+    @Column()
+    ownerId: number;
+
+    @OneToMany((type) => CardEntity, (card) => card.column, { cascade: true })
     cards?: CardEntity[];
 }

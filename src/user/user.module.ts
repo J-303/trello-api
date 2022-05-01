@@ -1,20 +1,17 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { jwtConstants } from 'src/auth/constants';
+import { AuthModule } from 'src/auth/auth.module';
+import { CardRepository } from 'src/card/card.repository';
 import { UserController } from './user.controller';
-import { UserEntity } from './user.entity';
+import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserEntity]),
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '60s' }
-    })
-  ],
-  controllers: [UserController],
-  providers: [UserService]
+    imports: [
+        TypeOrmModule.forFeature([UserRepository, CardRepository]),
+        AuthModule,
+    ],
+    controllers: [UserController],
+    providers: [UserService],
 })
 export class UserModule {}

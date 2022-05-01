@@ -1,67 +1,69 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
-import { User } from './user.decorator';
-import { UserDTO } from './user.dto';
-import { UserService } from './user.service';
-import { ApiAcceptedResponse, ApiBadRequestResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse } from '@nestjs/swagger';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    Request,
+    UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { CreateUserDTO, LoginUserDTO, ResponseUserDTO, UpdateUserDTO } from './user.dto';
+import { UserGuard } from './user.guard';
+import { UserService } from './user.service';
 
+@ApiTags('Users')
+@ApiBearerAuth('Bearer token')
 @Controller()
 export class UserController {
-    constructor(
-        private userServise: UserService
-    ) {}
+    constructor(private userService: UserService) {}
 
-    @ApiAcceptedResponse({description: 'User logged in successfully'})
-    @ApiBadRequestResponse({description: 'Cannot log in'})
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiUnauthorizedResponse()
     @UseGuards(AuthGuard('local'))
-    @Post('login')
-    login(@Body() data: UserDTO) {
-        return this.userServise.login(data);
+    @Post('auth/login')
+    async login(@Request() req, @Body() dto: LoginUserDTO) {
+        return this.userService.login(req, dto);
     }
 
-    @ApiCreatedResponse({description: 'User created'})
-    @ApiBadRequestResponse({description: 'Cannot create user'})
-    @Post('register')
-    register(@Body() data: UserDTO) {
-        return this.userServise.register(data);
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiForbiddenResponse()
+    @Post('auth/register')
+    async register(@Body() dto: CreateUserDTO) {
+        return await this.userService.register(dto);
     }
 
-    @ApiAcceptedResponse({description: 'Request accepted'})
+    @ApiOkResponse({ type: ResponseUserDTO })
     @Get('users')
-    getAllUsers() {
-        return this.userServise.getAll();
+    async getManyUsers() {
+        return this.userService.getMany();
     }
 
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    @ApiNotFoundResponse({description: 'User not found'})
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiNotFoundResponse()
     @Get('users/:id')
-    getOneUser(@Param('id') id: number) {
-        return this.userServise.getOne(id);
+    async getOneUser(@Param('id') id: number) {
+        return this.userService.getOne(id);
     }
 
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    @ApiForbiddenResponse({description: 'Cannot get user info'})
-    @Get('profile')
-    @UseGuards(AuthGuard('jwt'))
-    getMe(@User('id') userId: number) {
-        return this.userServise.getOne(userId);
-    }
-    
-    @ApiAcceptedResponse({description: 'User info changed'})
-    @ApiForbiddenResponse({description: 'Cannot change user info'})
-    @ApiNotFoundResponse({description: 'User not found'})
-    @Put('users')
-    @UseGuards(AuthGuard('jwt'))
-    editUser(@User('id') id: number, @Body() data: UserDTO) {
-        return this.userServise.edit(id, data);
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiNotFoundResponse()
+    @ApiUnauthorizedResponse()
+    @UseGuards(AuthGuard(), UserGuard)
+    @Put('users/:id')
+    async updateOneUser(@Param('id') id: number, @Body() data: UpdateUserDTO) {
+        return this.userService.updateOne(id, data);
     }
 
-    @ApiAcceptedResponse({description: 'Password changed'})
-    @ApiForbiddenResponse({description: 'Cannot change password'})
-    @ApiNotFoundResponse({description: 'User not found'})
-    @Put('changepassword')
-    @UseGuards(AuthGuard('jwt'))
-    changePassword(@User('id') userId: number, @Body() data: UserDTO) {
-        return this.userServise.changePass(userId, data);
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiNotFoundResponse()
+    @ApiUnauthorizedResponse()
+    @UseGuards(AuthGuard(), UserGuard)
+    @Delete('users/:id')
+    async deleteOneUser(@Param('id') id: number) {
+        return this.userService.deleteOne(id);
     }
 }

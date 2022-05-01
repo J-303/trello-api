@@ -1,61 +1,67 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, UsePipes } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    Request,
+    UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiAcceptedResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { User } from 'src/user/user.decorator';
-import { ColumnDTO } from './column.dto';
+import { ApiBearerAuth, ApiNotFoundResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ColumnOwnerGuard } from './column-owner.guard';
+import {
+    CreateColumnDTO,
+    ResponseColumnDTO,
+    UpdateColumnDTO,
+} from './column.dto';
 import { ColumnService } from './column.service';
 
+@ApiTags('Columns')
+@ApiBearerAuth()
 @Controller()
 export class ColumnController {
-    constructor(
-        private columnServise: ColumnService
-    ) {}
-    
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    @ApiNotFoundResponse({description: 'User not found'})
-    @Get('user/:userid/columns')
-    getUserColumns(@Param('userid') id: number) {
-        return this.columnServise.getAll(id);
+    constructor(private columnService: ColumnService) {}
+
+    @ApiOkResponse({ type: ResponseColumnDTO })
+    @ApiNotFoundResponse()
+    @Get('users/:ownerId/columns')
+    getManyColumns(@Param('ownerId') ownerId: number) {
+        return this.columnService.getMany(ownerId);
     }
 
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    @ApiNotFoundResponse({description: 'Column not found'})
-    @Get('column/:columnid')
-    getOneColumn(@Param('columnid') id: number) {
-        return this.columnServise.getOne(id);
+    @ApiOkResponse({ type: ResponseColumnDTO })
+    @ApiNotFoundResponse()
+    @Get('columns/:id')
+    getOneColumn(@Param('id') id: number) {
+        return this.columnService.getOne(id);
     }
 
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    @ApiNotFoundResponse({description: 'User not found'})
-    @Get('columns')
-    @UseGuards(AuthGuard('jwt'))
-    getMyColumns(@User('id') id: number) {
-        return this.columnServise.getAll(id);
-    }
-
-    @ApiCreatedResponse({description: 'Column created'})
-    @ApiForbiddenResponse({description: 'Cannot create column'})
+    @ApiOkResponse({ type: ResponseColumnDTO })
+    @ApiUnauthorizedResponse()
+    @UseGuards(AuthGuard())
     @Post('columns')
-    @UseGuards(AuthGuard('jwt'))
-    addColumn(@User('id') id: number, @Body() data: ColumnDTO) {
-        return this.columnServise.create(id, data);
+    createOneColumn(@Request() req, @Body() dto: CreateColumnDTO) {
+        return this.columnService.createOne(req, dto);
     }
 
-    @ApiAcceptedResponse({description: 'Column edited'})
-    @ApiForbiddenResponse({description: 'Cannot edit column'})
-    @ApiNotFoundResponse({description: 'Column not found'})
-    @Put('column/:columnid')
-    @UseGuards(AuthGuard('jwt'))
-    editColumn(@User('id') userId: number, @Param('columnid') id: number, @Body() data: ColumnDTO) {
-        return this.columnServise.update(id, userId, data);
+    @ApiOkResponse({ type: ResponseColumnDTO })
+    @ApiUnauthorizedResponse()
+    @ApiNotFoundResponse()
+    @UseGuards(AuthGuard(), ColumnOwnerGuard)
+    @Put('columns/:id')
+    updateOneColumn(@Param('id') id: number, @Body() dto: UpdateColumnDTO) {
+        return this.columnService.updateOne(dto, id);
     }
 
-    @ApiCreatedResponse({description: 'Column deleted'})
-    @ApiNotFoundResponse({description: 'Column not found'})
-    @ApiForbiddenResponse({description: 'Cannot delete column'})
-    @Delete('column/:columnid') 
-    @UseGuards(AuthGuard('jwt'))
-    removeColumn(@User('id') userId: number, @Param('columnid') id: number) {
-        return this.columnServise.detele(id, userId);
+    @ApiOkResponse({ type: ResponseColumnDTO })
+    @ApiUnauthorizedResponse()
+    @ApiNotFoundResponse()
+    @UseGuards(AuthGuard(), ColumnOwnerGuard)
+    @Delete('columns/:id')
+    deleteOneColumn(@Param('id') id: number) {
+        return this.columnService.deleteOne(id);
     }
 }

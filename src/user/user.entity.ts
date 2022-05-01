@@ -1,31 +1,32 @@
-import { BeforeInsert, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import * as bcrypt from "bcrypt";
-import { CardEntity } from "src/card/card.entity";
+import { hash } from 'bcrypt';
+import { CardEntity } from 'src/card/card.entity';
+import {
+    BeforeInsert,
+    Column,
+    Entity,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 
-@Entity('user')
+@Entity('users')
 export class UserEntity {
-
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
     username: string;
 
-    @Column()
+    @Column({ unique: true })
     email: string;
 
     @Column()
     password: string;
 
-    @OneToMany(type => CardEntity, card => card.owner, {cascade: true})
+    @OneToMany((type) => CardEntity, (card) => card.owner, { cascade: true })
     cards?: CardEntity[];
 
     @BeforeInsert()
-    async hashPass() {
-        this.password = await bcrypt.hash(this.password, 7);
-    }
-
-    async checkPass(password: string) {
-        return await bcrypt.compare(password, this.password);
+    async hashPassword() {
+        this.password = await hash(this.password, 10);
     }
 }
