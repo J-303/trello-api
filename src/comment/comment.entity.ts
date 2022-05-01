@@ -1,8 +1,8 @@
-import { CardEntity } from "src/card/card.entity";
-import { UserEntity } from "src/user/user.entity";
-import { Column, Entity, JoinColumn, JoinTable, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { CardEntity } from 'src/card/card.entity';
+import { UserEntity } from 'src/user/user.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity('comment')
+@Entity('comments')
 export class CommentEntity {
     @PrimaryGeneratedColumn()
     id: number;
@@ -10,19 +10,15 @@ export class CommentEntity {
     @Column()
     content: string;
 
-    @ManyToOne(type => UserEntity)
-    @JoinColumn({name:'user'})
-    owner: UserEntity;
-
-    @ManyToOne(type => CardEntity)
-    @JoinColumn({name:'card'})
+    @ManyToOne((type) => CardEntity, card => card.comments)
     card: CardEntity;
 
-    response() {
-        return {
-            ...this,
-            owner: {id: this.owner.id, username: this.owner.username},
-            card: {id: this.card.id, name: this.card.name}
-        }
-    }
+    @Column()
+    cardId: number;
+
+    @ManyToOne((type) => UserEntity)
+    owner: UserEntity;
+
+    @Column()
+    ownerId: number;
 }

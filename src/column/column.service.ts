@@ -1,99 +1,48 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from 'src/user/user.entity';
-import { Repository } from 'typeorm';
-import { ColumnDTO } from './column.dto';
-import { ColumnEntity } from './column.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { UserRepository } from 'src/user/user.repository';
+import { CreateColumnDTO, UpdateColumnDTO } from './column.dto';
+import { ColumnRepository } from './column.repository';
 
 @Injectable()
 export class ColumnService {
     constructor(
-        @InjectRepository(ColumnEntity)
-        private columnRepository: Repository<ColumnEntity>,
-        @InjectRepository(UserEntity)
-        private userRepository: Repository<UserEntity>
+        private columnRepo: ColumnRepository,
+        private userRepo: UserRepository,
     ) {}
 
-    checkOwner(column: ColumnEntity, userId: number) {
-        if (column.owner.id != userId)
-            throw new HttpException(
-                'Incorrect user.',
-                HttpStatus.UNAUTHORIZED
-            );
+    async getMany(ownerId: number) {
+        const user = await this.userRepo.findOne({ where: { id: ownerId } });
+        if (!user) throw new NotFoundException();
+        return (await this.columnRepo.find({ where: { ownerId } })).map(
+            (column) => this.columnRepo.response(column),
+        );
     }
 
     async getOne(id: number) {
-        const column = await this.columnRepository.findOne({
-            where:{id},
-            //TODO: зачем здесь owner?
-            relations: ['owner']
-        });
-        if (!column)
-            throw new HttpException(
-                'Column not found.',
-                HttpStatus.NOT_FOUND
-            );
-        return column.response();
+        const column = await this.columnRepo.findOne({ where: { id } });
+        if (!column) throw new NotFoundException();
+        return this.columnRepo.response(column);
     }
 
-    async getAll(userId: number) {
-        const user = await this.userRepository.findOne({where:{id:userId}});
-        if (!user) throw new HttpException('Incorrect user.', HttpStatus.UNAUTHORIZED);
-        const columns = await this.columnRepository.find({
-            where:{owner: userId},
-            relations: ['owner']
+    async createOne(req, dto: CreateColumnDTO) {
+        const owner = await this.userRepo.findOne({
+            where: { id: req.user.id },
         });
-        return columns.map(column => column.response());
+        const column = this.columnRepo.create({ ...dto, owner });
+        await this.columnRepo.save(column);
+        return this.columnRepo.response(column);
     }
 
-    async create(ownerId: number, data: ColumnDTO) {
-        const user = await this.userRepository.findOne({where:{id: ownerId}})
-        if (!user)
-            throw new HttpException(
-                'Incorrect user.',
-                HttpStatus.UNAUTHORIZED
-            )
-        const column = await this.columnRepository.create({
-            ...data,
-            owner: user
-        });
-        this.columnRepository.save(column);
-        return column.response();
+    async updateOne(dto: UpdateColumnDTO, id: number) {
+        await this.columnRepo.update({ id }, dto);
+        const column = await this.columnRepo.findOne({ where: { id } });
+        return this.columnRepo.response(column);
     }
 
-    async update(id: number, ownerId: number, data: ColumnDTO) {
-        let column = await this.columnRepository.findOne({
-            where: {id},
-            relations: ['owner']
-        });
-        if (!column)
-            throw new HttpException(
-                'Column not found.',
-                HttpStatus.NOT_FOUND
-            );
-
-    //TODO: Проверка должна осуществляться на уровне контроллера с помощью @UseGuards
-        this.checkOwner(column, ownerId);
-        await this.columnRepository.update({id}, data);
-        column = await this.columnRepository.findOne({
-            where: {id},
-            relations: ['owner']
-        });
-        return column.response();
-    }
-
-    async detele(id: number, ownerId: number) {
-        const column = await this.columnRepository.findOne({
-            where: {id},
-            relations: ['owner']
-        });
-        if (!column)
-            throw new HttpException(
-                'Column not found.',
-                HttpStatus.NOT_FOUND
-            );
-        this.checkOwner(column, ownerId);
-        await this.columnRepository.remove(column);
-        return column.response();
+    async deleteOne(id: number) {
+        const column = await this.columnRepo.findOne({ where: { id } });
+        if (!column) throw new NotFoundException();
+        this.columnRepo.delete({ id });
+        return this.columnRepo.response(column);
     }
 }

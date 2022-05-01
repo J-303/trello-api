@@ -1,10 +1,15 @@
-import { HttpException, HttpStatus } from "@nestjs/common";
-import { ColumnEntity } from "src/column/column.entity";
-import { CommentEntity } from "src/comment/comment.entity";
-import { UserEntity } from "src/user/user.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { ColumnEntity } from 'src/column/column.entity';
+import { CommentEntity } from 'src/comment/comment.entity';
+import { UserEntity } from 'src/user/user.entity';
+import {
+    Column,
+    Entity,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from 'typeorm';
 
-@Entity('card')
+@Entity('cards')
 export class CardEntity {
     @PrimaryGeneratedColumn()
     id: number;
@@ -15,30 +20,18 @@ export class CardEntity {
     @Column()
     content?: string;
 
-    @ManyToOne(type => UserEntity)
-    @JoinColumn({name:'user'})
+    @ManyToOne((type) => UserEntity, (user) => user.cards)
     owner: UserEntity;
 
-    @ManyToOne(type => ColumnEntity)
-    @JoinColumn({name:'column'})
+    @Column()
+    ownerId: number;
+
+    @ManyToOne((type) => ColumnEntity)
     column: ColumnEntity;
 
-    @OneToMany(type => CommentEntity, comment => comment.card, {cascade: true})
+    @Column()
+    columnId: number;
+
+    @OneToMany((type) => CommentEntity, (comment) => comment.card, { cascade: true })
     comments?: CommentEntity[];
-
-    response() {
-        const {id,name,content} = this;
-        return {
-            id,
-            name,
-            content,
-            owner: {id: this.owner.id, username: this.owner.username},
-            column: {id: this.column.id, name: this.column.name}
-        }
-    }
-
-    checkOwner(userId: number) {
-        if(this.owner.id != userId)
-            throw new HttpException('Incorrect user.', HttpStatus.UNAUTHORIZED);
-    }
 }

@@ -1,80 +1,69 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-import { AuthGuard } from 'src/share/auth.guard';
-import { User } from './user.decorator';
-import { UserDTO } from './user.dto';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    Request,
+    UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { CreateUserDTO, LoginUserDTO, ResponseUserDTO, UpdateUserDTO } from './user.dto';
+import { UserGuard } from './user.guard';
 import { UserService } from './user.service';
-import { ApiAcceptedResponse, ApiBadRequestResponse, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 
+@ApiTags('Users')
+@ApiBearerAuth('Bearer token')
 @Controller()
 export class UserController {
-    constructor(
-        private userServise: UserService
-    ) {}
+    constructor(private userService: UserService) {}
 
-    @ApiAcceptedResponse({description: 'User logged in successfully'})
-    @ApiBadRequestResponse({description: 'Cannot log in'})
-     //TODO: лучше так и назвать endpoint /login
-    @Get('auth')
-    @UsePipes(new ValidationPipe())
-    login(@Body() data: UserDTO) {
-        return this.userServise.login(data);
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiUnauthorizedResponse()
+    @UseGuards(AuthGuard('local'))
+    @Post('auth/login')
+    async login(@Request() req, @Body() dto: LoginUserDTO) {
+        return this.userService.login(req, dto);
     }
 
-    @ApiCreatedResponse({description: 'User created'})
-    @ApiBadRequestResponse({description: 'Cannot create user'})
-    //TODO: лучше так и назвать endpoint /register
-    @Post('auth')
-    @UsePipes(new ValidationPipe())
-    register(@Body() data: UserDTO) {
-        return this.userServise.register(data);
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiForbiddenResponse()
+    @Post('auth/register')
+    async register(@Body() dto: CreateUserDTO) {
+        return await this.userService.register(dto);
     }
 
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    //TODO: Нет, так не делается пагинация. Давай пока её лучше уберем
-    @Get('users/:page')
-    getAllUsers(@Param('page') page: number) {
-        return this.userServise.getAll(page);
-    }
-
-    @ApiAcceptedResponse({description: 'Request accepted'})
+    @ApiOkResponse({ type: ResponseUserDTO })
     @Get('users')
-    getAllUsersPage1() {
-        return this.userServise.getAll(1);
+    async getManyUsers() {
+        return this.userService.getMany();
     }
 
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    @ApiNotFoundResponse({description: 'User not found'})
-    //TODO: должно быть users/:id
-    @Get('user/:id')
-    getOneUser(@Param('id') id: number) {
-        return this.userServise.getOne(id);
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiNotFoundResponse()
+    @Get('users/:id')
+    async getOneUser(@Param('id') id: number) {
+        return this.userService.getOne(id);
     }
 
-    @ApiAcceptedResponse({description: 'Request accepted'})
-    @ApiForbiddenResponse({description: 'Cannot get user info'})
-    @Get('user')
-    @UseGuards(new AuthGuard())
-    getMe(@User('id') userId: number) {
-        return this.userServise.getOne(userId);
-    }
-    
-    @ApiAcceptedResponse({description: 'User info changed'})
-    @ApiForbiddenResponse({description: 'Cannot change user info'})
-    @ApiNotFoundResponse({description: 'User not found'})
-    @Put('user')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
-    editUser(@User('id') id: number, @Body() data: UserDTO) {
-        return this.userServise.edit(id, data);
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiNotFoundResponse()
+    @ApiUnauthorizedResponse()
+    @UseGuards(AuthGuard(), UserGuard)
+    @Put('users/:id')
+    async updateOneUser(@Param('id') id: number, @Body() data: UpdateUserDTO) {
+        return this.userService.updateOne(id, data);
     }
 
-    @ApiAcceptedResponse({description: 'Password changed'})
-    @ApiForbiddenResponse({description: 'Cannot change password'})
-    @ApiNotFoundResponse({description: 'User not found'})
-    @Put('changepassword')
-    @UseGuards(new AuthGuard())
-    @UsePipes(new ValidationPipe())
-    changePassword(@User('id') userId: number, @Body() data: UserDTO) {
-        return this.userServise.changePass(userId, data);
+    @ApiOkResponse({ type: ResponseUserDTO })
+    @ApiNotFoundResponse()
+    @ApiUnauthorizedResponse()
+    @UseGuards(AuthGuard(), UserGuard)
+    @Delete('users/:id')
+    async deleteOneUser(@Param('id') id: number) {
+        return this.userService.deleteOne(id);
     }
 }
